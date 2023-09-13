@@ -1,0 +1,53 @@
+import boto3
+import json
+
+def final_extractor(resp):
+    print("Final Extractor Started")
+    keyid = str(resp["Credentials"]['AccessKeyId'])
+    secrettoken = str(resp["Credentials"]['SecretAccessKey'])
+    sessiontoken = str(resp["Credentials"]['SessionToken'])
+    # return json.dumps(resp["Credentials"],default=str)
+    region = 'us-east-1'  
+    print(" boto3 se connection ")
+    print(keyid)
+    print(secrettoken)
+    print(sessiontoken)
+    print(type(keyid))
+    print(type(secrettoken))
+    print(type(sessiontoken))
+    ec2_client = boto3.client('ec2',region_name=region,
+    aws_access_key_id=keyid,
+    aws_secret_access_key=secrettoken,
+    aws_session_token=sessiontoken
+    )
+   
+    instances = ec2_client.describe_instances()
+    print("ec2 shuru hua")
+    instance_tags = []
+    for reservation in instances['Reservations']:
+        for instance in reservation['Instances']:
+            instance_id = instance['InstanceId']
+            tags = instance.get('Tags', [])
+            instance_tags.append({'InstanceId': instance_id, 'Tags': tags})
+    for tag_info in instance_tags:
+        print(f"Instance ID: {tag_info['InstanceId']}, Tags: {tag_info['Tags']}")
+    print("print tag done")
+    return instance_tags
+def lambda_handler(event, context):
+    sts_client = boto3.client("sts")
+    account_number = ["007263728907","306856056366"]
+    account_instance_info = {}  
+    for i in account_number:
+        role_arn = f"arn:aws:iam::{i}:role/EC2PermissionRole"
+        role_session_name = "EC2PermissionRole"
+        resp = sts_client.assume_role(
+            RoleArn=role_arn,
+            RoleSessionName=role_session_name
+        )
+        instance_tags = final_extractor(resp)
+        account_instance_info[i] = instance_tags
+    for account_number, instance_info in account_instance_info.items():
+        print(f"Account Number: {account_number}")
+        for tag_info in instance_info:
+            print(f"Instance ID: {tag_info['InstanceId']}, Tags: {tag_info['Tags']}")
+    return account_instance_info
