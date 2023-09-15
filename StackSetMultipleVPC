@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create Security Groups in Multiple VPCs
+
+Mappings:
+  VpcMappings:
+    us-east-1:
+      '007263728907': vpc-0e5e834d16b679c22
+      '306856056366': vpc-0943598f9845a8fc6
+
+Parameters:
+  RegionOrAccountId:
+    Type: String
+    Description: Enter AWS Region or AWS Account ID
+
+Resources:
+  SecurityGroup1:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: SecurityGroup1
+      GroupDescription: My Security Group 1
+      VpcId: !FindInMap [VpcMappings, !Ref "AWS::Region", !Ref "AWS::AccountId"]
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+
+  SecurityGroup2:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: SecurityGroup2
+      GroupDescription: My Security Group 2
+      VpcId: !FindInMap [VpcMappings, !Ref "AWS::Region", !Ref "AWS::AccountId"]
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
